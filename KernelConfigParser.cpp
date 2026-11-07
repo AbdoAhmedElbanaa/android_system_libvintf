@@ -65,7 +65,8 @@ status_t KernelConfigParser::processRemaining() {
     if (mRelaxedFormat) {
         // Allow free format like "   CONFIG_FOO  = bar    #trailing comments"
         if (std::regex_match(mRemaining, match, sKeyValuePattern)) {
-            if (mConfigs.emplace(match[1], trimTrailingSpaces(match[2])).second) {
+            auto [it, inserted] = mConfigs.emplace(match[1], trimTrailingSpaces(match[2]));
+            if (inserted || it->second == trimTrailingSpaces(match[2])) {
                 return OK;
             }
             mError << "Duplicated key in configs: " << match[1] << "\n";
@@ -77,7 +78,8 @@ status_t KernelConfigParser::processRemaining() {
         if (equalPos != std::string::npos) {
             std::string key = mRemaining.substr(0, equalPos);
             std::string value = mRemaining.substr(equalPos + 1);
-            if (mConfigs.emplace(std::move(key), std::move(value)).second) {
+            auto [it, inserted] = mConfigs.emplace(key, value);
+            if (inserted || it->second == value) {
                 return OK;
             }
             mError << "Duplicated key in configs: " << mRemaining.substr(0, equalPos) << "\n";
